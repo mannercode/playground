@@ -64,7 +64,7 @@
         "lint-staged": "17.5.1",
         "mongodb": "7.7.0",
         "oxlint": "1.85.0",
-        "prettier": "3.9.9",
+        "prettier": "3.9.10",
         "reflect-metadata": "0.2.2",
         "rxjs": "7.8.2",
         "testcontainers": "12.1.0",
