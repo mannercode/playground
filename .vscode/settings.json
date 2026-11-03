@@ -1,0 +1,10 @@
+{
+    "files.exclude": { "**/node_modules": true },
+    "files.watcherExclude": { "**/_output/**": true },
+    "search.exclude": { "**/_output/**": true },
+    "js/ts.tsc.autoDetect": "off",
+    "js/ts.tsserver.automaticTypeAcquisition.enabled": false,
+    "js/ts.format.enabled": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "[shellscript]": { "editor.defaultFormatter": "mkhl.shfmt" }
+}

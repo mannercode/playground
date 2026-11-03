@@ -1,0 +1,19 @@
+services:
+    nats:
+        extends: { file: ./compose.common.yml, service: common-options }
+        image: $NATS_IMAGE
+        # JetStream 상태는 named volume에 둬 컨테이너 재시작 후에도 유지한다.
+        # healthcheck는 `-m 8222`로 연 모니터링 HTTP 포트의 `/healthz`를 사용한다.
+        command: >
+            --name nats
+            -js
+            --store_dir /data
+            -m 8222
+        volumes:
+            - nats_data:/data
+        # `?js-enabled-only=true`를 붙여 서버뿐 아니라 JetStream 초기화까지 확인한다.
+        healthcheck:
+            test: 'wget -qO- "http://localhost:8222/healthz?js-enabled-only=true" || exit 1'
+
+volumes:
+    nats_data: {}

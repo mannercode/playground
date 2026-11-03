@@ -1,0 +1,52 @@
+x-redis-base: &redis-base
+    extends: { file: ./compose.common.yml, service: common-options }
+    image: $REDIS_IMAGE
+    healthcheck:
+        test: 'redis-cli ping'
+    # Redis 노드는 클라이언트에게 다음에 접속할 주소를 알려 준다.
+    # 컨테이너끼리는 서비스 이름(redis1/2/3)과 내부 포트 6379로 통신하므로, 각 노드가 그 주소를 알리게 한다.
+    command: |
+        sh -euc '
+          redis-server --port 6379 \
+          --cluster-enabled yes \
+          --cluster-config-file nodes.conf \
+          --cluster-announce-hostname $$ANNOUNCE_HOSTNAME \
+          --cluster-preferred-endpoint-type hostname \
+          --cluster-announce-port 6379 \
+          --cluster-announce-bus-port 16379 \
+          --cluster-require-full-coverage no \
+          --protected-mode no
+        '
+
+services:
+    redis1:
+        <<: *redis-base
+        environment:
+            ANNOUNCE_HOSTNAME: redis1
+
+    redis2:
+        <<: *redis-base
+        environment:
+            ANNOUNCE_HOSTNAME: redis2
+
+    redis3:
+        <<: *redis-base
+        environment:
+            ANNOUNCE_HOSTNAME: redis3
+
+    redis-setup:
+        extends: { file: ./compose.common.yml, service: common-options }
+        image: $REDIS_IMAGE
+        depends_on:
+            {
+                redis1: { condition: service_healthy },
+                redis2: { condition: service_healthy },
+                redis3: { condition: service_healthy }
+            }
+        command: |
+            sh -euc '
+            REDIS_NODES="redis1:6379 redis2:6379 redis3:6379"
+
+            echo "yes" |
+                redis-cli --cluster create $$REDIS_NODES --cluster-replicas 0
+            '

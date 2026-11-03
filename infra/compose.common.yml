@@ -1,0 +1,4 @@
+services:
+    common-options:
+        logging: { options: { max-size: '1m', max-file: '1' } }
+        healthcheck: { interval: 30s, timeout: 3s }

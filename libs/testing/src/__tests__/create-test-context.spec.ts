@@ -1,0 +1,19 @@
+import { type TestContextFixture, createTestContextFixture } from './create-test-context.fixture.js'
+
+describe('createTestContext', () => {
+    let fix: TestContextFixture
+
+    beforeEach(async () => {
+        fix = await createTestContextFixture()
+    })
+    afterEach(() => fix.teardown())
+
+    it('주입받은 서비스를 호출하면 override로 지정한 모의 응답을 반환한다', async () => {
+        const message = fix.sampleService.getMessage()
+        expect(message).toEqual({ message: 'This is Mock' })
+    })
+
+    it('테스트 컨텍스트의 httpClient로 GET 요청을 보내면 라우팅된 응답을 반환한다', async () => {
+        await fix.httpClient.get('/message/value').ok({ expected: { received: 'value' } })
+    })
+})

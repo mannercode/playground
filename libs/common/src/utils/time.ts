@@ -1,0 +1,80 @@
+import { InternalServerErrorException } from '@nestjs/common'
+import { ensure } from './validator.js'
+
+export class TimeUtil {
+    /**
+     * 밀리초 값을 `1d2h3m4s5ms`처럼 큰 단위부터 이어 붙인 문자열로 변환한다.
+     * 0은 `0ms`, 음수는 toMs가 같은 값으로 읽도록 각 항목에 `-`를 붙인다.
+     */
+    static fromMs(milliseconds: number): string {
+        if (milliseconds === 0) {
+            return '0ms'
+        }
+
+        const sign = milliseconds < 0 ? '-' : ''
+        let remainingMs = Math.abs(milliseconds)
+
+        const days = Math.floor(remainingMs / (24 * 60 * 60 * 1000))
+        // toMs가 복원할 밀리초 값과 같은 방식으로 계산해 빼야, 큰 수를 왕복 변환할 때 나머지가 유실되지 않는다.
+        remainingMs -= days * (24 * 60 * 60 * 1000)
+        const hours = Math.floor(remainingMs / (60 * 60 * 1000))
+        remainingMs -= hours * (60 * 60 * 1000)
+        const minutes = Math.floor(remainingMs / (60 * 1000))
+        remainingMs -= minutes * (60 * 1000)
+        const seconds = Math.floor(remainingMs / 1000)
+        const millisecondsRemainder = remainingMs - seconds * 1000
+
+        let result = ''
+        if (days > 0) result += `${sign}${days}d`
+        if (hours > 0) result += `${sign}${hours}h`
+        if (minutes > 0) result += `${sign}${minutes}m`
+        if (seconds > 0) result += `${sign}${seconds}s`
+        if (millisecondsRemainder > 0) result += `${sign}${millisecondsRemainder}ms`
+
+        return result
+    }
+
+    /**
+     * `1d 2h`, `30m`, `500ms` 같은 시간 표현식을 밀리초로 변환한다.
+     * 단위는 `ms`, `s`, `m`, `h`, `d`만 허용하며, 형식이 맞지 않으면 예외를 던진다.
+     */
+    static toMs(timeExpression: string): number {
+        const validFormatRegex =
+            /^(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)(ms|s|m|h|d)(\s*(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)(ms|s|m|h|d))*$/
+
+        if (!validFormatRegex.test(timeExpression)) {
+            throw new InternalServerErrorException('Internal server error', {
+                cause: `Invalid time format(${timeExpression})`
+            })
+        }
+
+        const timeTokenRegex = /(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)(ms|s|m|h|d)/g
+        let totalMilliseconds = 0
+
+        // fromMs는 큰 단위부터 출력한다. 역순으로 더해 작은 값이 큰 값에 더해질 때마다 반올림되는 것을 줄인다.
+        for (const [, amount, unit] of Array.from(
+            timeExpression.matchAll(timeTokenRegex)
+        ).reverse()) {
+            let unitValue: number
+            switch (ensure(unit)) {
+                case 'd':
+                    unitValue = 24 * 60 * 60 * 1000
+                    break
+                case 'h':
+                    unitValue = 60 * 60 * 1000
+                    break
+                case 'm':
+                    unitValue = 60 * 1000
+                    break
+                case 's':
+                    unitValue = 1000
+                    break
+                default:
+                    unitValue = 1
+            }
+            totalMilliseconds += Number(amount) * unitValue
+        }
+
+        return totalMilliseconds
+    }
+}

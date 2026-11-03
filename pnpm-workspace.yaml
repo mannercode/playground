@@ -1,0 +1,26 @@
+packages:
+    - 'apps/*'
+    - 'libs/*'
+    - 'infra/tests'
+    - 'tests/*'
+    - 'tools/*'
+
+saveExact: true
+
+# TypeScript는 별도 지시 전까지 현재 버전을 유지한다.
+update:
+    ignoreDeps:
+        - typescript
+
+allowBuilds:
+    'argon2@0.45.1': true
+    cpu-features: false
+    'fsevents@2.3.2': true
+    'fsevents@2.3.3': true
+    protobufjs: false
+    ssh2: false
+    'unrs-resolver@1.12.2': true
+
+minimumReleaseAgeExclude:
+    - compression@1.8.2
+    - lint-staged@17.5.1

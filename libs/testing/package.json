@@ -1,0 +1,27 @@
+{
+    "name": "@mannercode/testing",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "main": "_output/dist/index.js",
+    "types": "_output/dist/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+        "lint": "tsc --noEmit -p tsconfig.build.json && tsc --noEmit -p tsconfig.test.json && oxlint -c \"${WORKSPACE_ROOT:?}/oxlint.config.mts\" src/ vitest.config.mjs && prettier --check src/ vitest.config.mjs",
+        "format": "prettier --write src/ vitest.config.mjs",
+        "test": "vitest run",
+        "atoz": "pnpm run build && pnpm run lint && pnpm test"
+    },
+    "dependencies": {
+        "superagent": "10.4.1"
+    },
+    "peerDependencies": {
+        "@nestjs/common": "^12.0.0",
+        "@nestjs/testing": "^12.0.0"
+    },
+    "devDependencies": {
+        "@types/superagent": "8.1.11",
+        "vitest": "5.0.1"
+    }
+}

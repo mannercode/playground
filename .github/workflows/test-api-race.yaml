@@ -1,0 +1,75 @@
+name: Test API Race
+on:
+    workflow_dispatch:
+    schedule:
+        # UTC 기준 6시간마다 실행한다.
+        - cron: '27 */6 * * *'
+permissions:
+    contents: read
+jobs:
+    api-race:
+        timeout-minutes: 240
+        strategy:
+            fail-fast: false
+            matrix:
+                scenario:
+                    - sse-fanout-race
+                    - user-signup-race
+                    - ticket-holding-race
+                    - showtime-overlap-race
+                    - purchase-double-spend
+                    - purchase-overlap-race
+                    - replica-chaos
+                    - jwt-refresh-race
+        runs-on: ubuntu-26.04-arm
+        steps:
+            - uses: actions/checkout@v7.0.1
+            # 호스트 지표는 Dev Container 밖에서 기록해야 runner 자원 경합을 볼 수 있다.
+            - name: Start runner diagnostics
+              id: runner_diagnostics
+              run: |
+                  command -v vmstat
+                  date --utc --iso-8601=seconds > "${RUNNER_TEMP}/api-race-started-at"
+                  vmstat -w -t 1 > "${RUNNER_TEMP}/api-race-vmstat.log" 2>&1 &
+                  echo "$!" > "${RUNNER_TEMP}/api-race-vmstat.pid"
+                  vmstat -d -t 1 > "${RUNNER_TEMP}/api-race-disks.log" 2>&1 &
+                  echo "$!" > "${RUNNER_TEMP}/api-race-disks.pid"
+            - name: Run in devcontainer
+              id: race
+              uses: devcontainers/ci@v0.3.1900000450
+              with:
+                  runCmd: |
+                      set -e
+                      run=1
+                      while [ "$run" -le 25 ]; do
+                          echo "[Run ${run}/25]"
+                          pnpm run race ${{ matrix.scenario }}
+                          run=$((run + 1))
+                      done
+            - name: Finish runner diagnostics
+              if: ${{ always() && steps.runner_diagnostics.outcome == 'success' }}
+              env:
+                  RACE_OUTCOME: ${{ steps.race.outcome }}
+              run: |
+                  if [ "${RACE_OUTCOME}" != "success" ]; then
+                      echo "=== runner resources $(date --utc --iso-8601=seconds) ==="
+                      head -n 3 "${RUNNER_TEMP}/api-race-vmstat.log"
+                      tail -n 180 "${RUNNER_TEMP}/api-race-vmstat.log"
+                      echo "--- disk I/O ---"
+                      head -n 3 "${RUNNER_TEMP}/api-race-disks.log"
+                      tail -n 600 "${RUNNER_TEMP}/api-race-disks.log"
+                      lsblk -o NAME,TYPE,SIZE,FSTYPE,MOUNTPOINTS
+                      free -m
+                      df -h
+                      df -i
+                      for resource in cpu memory io; do
+                          echo "--- ${resource} pressure ---"
+                          cat "/proc/pressure/${resource}"
+                      done
+                      # DB 복제 지연과 호스트의 장치 오류·백그라운드 작업을 대조한다.
+                      echo "--- runner system journal ---"
+                      sudo journalctl --since "$(cat "${RUNNER_TEMP}/api-race-started-at")" \
+                          --no-pager --output short-iso -n 300
+                  fi
+                  kill "$(cat "${RUNNER_TEMP}/api-race-vmstat.pid")" \
+                      "$(cat "${RUNNER_TEMP}/api-race-disks.pid")"

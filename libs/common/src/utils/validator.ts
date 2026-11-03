@@ -1,0 +1,52 @@
+import { InternalServerErrorException, Logger } from '@nestjs/common'
+import { inspect } from 'node:util'
+import { isEqual } from './lodash.js'
+
+export class Assume {
+    static equalLength(a: any[] | undefined, b: any[] | undefined, message: string) {
+        const aLen = Array.isArray(a) ? a.length : undefined
+        const bLen = Array.isArray(b) ? b.length : undefined
+
+        if (aLen === undefined || bLen === undefined || aLen !== bLen) {
+            Logger.warn(`${message} first: ${aLen}, second: ${bLen}`)
+        }
+    }
+}
+
+export class Require {
+    static defined<T>(
+        value: null | T | undefined,
+        message = 'Value must exist.'
+    ): asserts value is NonNullable<T> {
+        if (value == null) {
+            throw new InternalServerErrorException('Internal server error', { cause: message })
+        }
+    }
+
+    static equalLength(a: any[] | undefined, b: any[] | undefined, message: string) {
+        const aLen = Array.isArray(a) ? a.length : undefined
+        const bLen = Array.isArray(b) ? b.length : undefined
+
+        if (aLen === undefined || bLen === undefined || aLen !== bLen) {
+            throw new InternalServerErrorException('Internal server error', {
+                cause: `${message} first: ${aLen}, second: ${bLen}`
+            })
+        }
+    }
+
+    static equals<T>(a: T, b: T, message: string) {
+        if (!isEqual(a, b)) {
+            throw new InternalServerErrorException('Internal server error', {
+                cause: `${inspect(a, { customInspect: false })} !== ${inspect(b, { customInspect: false })}, ${message}`
+            })
+        }
+    }
+}
+
+export function ensure<T>(value: null | T | undefined, message = 'Value must exist.'): T {
+    if (value == null) {
+        throw new InternalServerErrorException('Internal server error', { cause: message })
+    }
+
+    return value
+}

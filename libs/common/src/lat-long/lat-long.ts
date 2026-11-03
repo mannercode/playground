@@ -1,0 +1,117 @@
+import { BadRequestException, createParamDecorator, type ExecutionContext } from '@nestjs/common'
+import { z } from 'zod'
+
+const EARTH_RADIUS_METERS = 6_371_000
+const MAX_COORDINATE_LENGTH = 20
+
+export const LatLongErrors = {
+    InvalidFormat: () => ({
+        code: 'ERR_LATLONG_INVALID_FORMAT',
+        message: 'latLong must be in the format "latitude,longitude"'
+    }),
+    OutOfRange: (
+        details: Array<{ constraints: Record<string, string> | undefined; field: string }>
+    ) => ({
+        code: 'ERR_LATLONG_OUT_OF_RANGE',
+        message: 'Latitude must be between -90 and 90, longitude must be between -180 and 180',
+        details
+    }),
+    Required: () => ({
+        code: 'ERR_LATLONG_REQUIRED',
+        message: 'The latLong query parameter is required'
+    })
+}
+
+const LatLongSchema = z.strictObject({
+    latitude: z
+        .number()
+        .min(-90, 'latitude must not be less than -90')
+        .max(90, 'latitude must not be greater than 90'),
+    longitude: z
+        .number()
+        .min(-180, 'longitude must not be less than -180')
+        .max(180, 'longitude must not be greater than 180')
+})
+
+export class LatLong {
+    latitude: number
+
+    longitude: number
+
+    static distanceInMeters(from: LatLong, to: LatLong): number {
+        const toRadians = (degrees: number) => degrees * (Math.PI / 180)
+
+        const fromLat = toRadians(from.latitude)
+        const fromLng = toRadians(from.longitude)
+        const toLat = toRadians(to.latitude)
+        const toLng = toRadians(to.longitude)
+
+        const deltaLat = toLat - fromLat
+        const deltaLng = toLng - fromLng
+
+        // 정반대 좌표의 반올림 오차가 제곱근의 정의역을 벗어나지 않게 한다.
+        const halfChordSquared = Math.min(
+            1,
+            Math.max(
+                0,
+                Math.sin(deltaLat / 2) ** 2 +
+                    Math.cos(fromLat) * Math.cos(toLat) * Math.sin(deltaLng / 2) ** 2
+            )
+        )
+
+        const centralAngle =
+            2 * Math.atan2(Math.sqrt(halfChordSquared), Math.sqrt(1 - halfChordSquared))
+
+        return EARTH_RADIUS_METERS * centralAngle
+    }
+}
+
+function isNumericString(value: string): boolean {
+    if (value.length > MAX_COORDINATE_LENGTH) return false
+    return /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value)
+}
+
+function parseCoordinatePair(value: unknown): null | { latitude: number; longitude: number } {
+    if (typeof value !== 'string') return null
+
+    const coords = value.split(',').map((part) => part.trim())
+    if (coords.length !== 2 || !coords.every((coord) => isNumericString(coord))) return null
+
+    const [latStr, lngStr] = coords
+    return { latitude: Number(latStr), longitude: Number(lngStr) }
+}
+
+export const ParseLatLongQuery = createParamDecorator(
+    (paramName: string, ctx: ExecutionContext) => {
+        const request = ctx.switchToHttp().getRequest()
+        const raw = request.query[paramName]
+
+        if (!raw) {
+            throw new BadRequestException(LatLongErrors.Required())
+        }
+
+        const parsed = parseCoordinatePair(raw)
+
+        if (!parsed) {
+            throw new BadRequestException(LatLongErrors.InvalidFormat())
+        }
+
+        const result = LatLongSchema.safeParse(parsed)
+
+        if (!result.success) {
+            throw new BadRequestException(
+                LatLongErrors.OutOfRange(
+                    result.error.issues.map((issue) => {
+                        const constraint = issue.code === 'too_big' ? 'max' : 'min'
+                        return {
+                            constraints: { [constraint]: issue.message },
+                            field: String(issue.path[0])
+                        }
+                    })
+                )
+            )
+        }
+
+        return Object.assign(new LatLong(), result.data)
+    }
+)

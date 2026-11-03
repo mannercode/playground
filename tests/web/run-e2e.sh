@@ -1,0 +1,47 @@
+#!/bin/bash
+set -Eeuo pipefail
+cd -- "$(dirname -- "$0")"
+
+: "${WORKSPACE_ROOT:?Dev Container의 WORKSPACE_ROOT가 필요합니다}"
+: "${COMPOSE_PROJECT_NAME:?Dev Container의 COMPOSE_PROJECT_NAME이 필요합니다}"
+: "${DEVCONTAINER_NETWORK:?Dev Container의 DEVCONTAINER_NETWORK가 필요합니다}"
+
+compose=(docker compose --project-name "${COMPOSE_PROJECT_NAME}-web")
+
+mkdir -p _output
+
+list_only=false
+for argument in "$@"; do
+    case "${argument}" in
+        --list) list_only=true ;;
+    esac
+done
+
+if [[ "${list_only}" == true ]]; then
+    pnpm exec playwright test "$@"
+    exit
+fi
+
+cleanup() {
+    local exit_code=$?
+    trap - EXIT
+    set +e
+
+    if [[ "${exit_code}" -ne 0 ]]; then
+        "${compose[@]}" ps --all >&2
+        "${compose[@]}" logs --no-color --timestamps >&2
+    fi
+
+    "${compose[@]}" down -t 0
+    local cleanup_exit_code=$?
+    if [[ "${exit_code}" -eq 0 ]]; then
+        exit_code=${cleanup_exit_code}
+    fi
+    exit "${exit_code}"
+}
+trap cleanup EXIT
+
+"${compose[@]}" build api console user-app
+"${compose[@]}" up --detach --no-build --wait api console user-app
+
+pnpm exec playwright test "$@"

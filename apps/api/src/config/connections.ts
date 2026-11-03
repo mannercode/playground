@@ -1,0 +1,2 @@
+export const REDIS_CONNECTION_NAME = 'redis-connection'
+export const NATS_CONNECTION_NAME = 'nats-connection'

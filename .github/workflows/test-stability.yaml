@@ -1,0 +1,41 @@
+name: Test Stability
+on:
+    workflow_dispatch:
+    schedule:
+        # UTC 기준 6시간마다 실행한다.
+        - cron: '27 */6 * * *'
+permissions:
+    contents: read
+jobs:
+    stability:
+        name: ${{ matrix.name }}
+        timeout-minutes: 240
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - name: libs
+                      repeat: 38
+                      command: pnpm --recursive --filter './libs/**' --fail-if-no-match run test --coverage.enabled=false
+                    - name: api
+                      repeat: 30
+                      setup: pnpm run pretest
+                      command: pnpm --filter './apps/api' --fail-if-no-match run test --coverage.enabled=false
+                    - name: infra-reset
+                      repeat: 25
+                      command: bash infra/reset.sh
+        runs-on: ubuntu-26.04-arm
+        steps:
+            - uses: actions/checkout@v7.0.1
+            - name: Run in devcontainer
+              uses: devcontainers/ci@v0.3.1900000450
+              with:
+                  runCmd: |
+                      set -e
+                      ${{ matrix.setup }}
+                      run=1
+                      while [ "$run" -le ${{ matrix.repeat }} ]; do
+                          echo "[Run ${run}/${{ matrix.repeat }}]"
+                          ${{ matrix.command }}
+                          run=$((run + 1))
+                      done

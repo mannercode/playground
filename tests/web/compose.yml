@@ -1,0 +1,66 @@
+x-logging: &logging
+    logging: { driver: json-file, options: { max-size: '1m', max-file: '1' } }
+
+services:
+    api:
+        <<: *logging
+        build:
+            context: ${WORKSPACE_ROOT:?}
+            dockerfile: apps/api/Dockerfile
+        env_file:
+            - path: ${WORKSPACE_ROOT:?}/.env.infra
+              format: raw
+            - path: ${WORKSPACE_ROOT:?}/.env.api
+              format: raw
+        environment:
+            NODE_ENV: production
+        healthcheck:
+            test: 'curl -fsS http://localhost:$${API_PORT:?}/health'
+            interval: 2s
+            timeout: 5s
+            retries: 60
+            start_period: 5s
+
+    console:
+        <<: *logging
+        build:
+            context: ${WORKSPACE_ROOT:?}
+            dockerfile: apps/console/Dockerfile
+        environment:
+            API_BASE_URL: http://api:${API_PORT:?}
+            BFF_COOKIE_SECURE: 'false'
+            BFF_TRUST_PROXY_HEADERS: 'true'
+            PORT: ${CONSOLE_PORT:?}
+        depends_on:
+            api: { condition: service_healthy }
+        healthcheck: &frontend-healthcheck
+            test:
+                [
+                    'CMD',
+                    'node',
+                    '-e',
+                    "fetch('http://localhost:'+process.env.PORT).then(response=>process.exit(response.ok?0:1)).catch(()=>process.exit(1))"
+                ]
+            interval: 2s
+            timeout: 5s
+            retries: 60
+            start_period: 5s
+
+    user-app:
+        <<: *logging
+        build:
+            context: ${WORKSPACE_ROOT:?}
+            dockerfile: apps/user-app/Dockerfile
+        environment:
+            API_BASE_URL: http://api:${API_PORT:?}
+            BFF_COOKIE_SECURE: 'false'
+            BFF_TRUST_PROXY_HEADERS: 'true'
+            PORT: ${USER_APP_PORT:?}
+        depends_on:
+            api: { condition: service_healthy }
+        healthcheck: *frontend-healthcheck
+
+networks:
+    default:
+        name: ${DEVCONTAINER_NETWORK:?}
+        external: true

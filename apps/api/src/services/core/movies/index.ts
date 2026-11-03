@@ -1,0 +1,5 @@
+export * from './dtos/index.js'
+export * from './errors.js'
+export * from './models/index.js'
+export * from './movies.module.js'
+export * from './movies.service.js'
