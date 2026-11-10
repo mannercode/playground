@@ -305,11 +305,11 @@ importers:
         specifier: 12.0.3
         version: 12.0.3(@nestjs/common@12.4.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.4.0)
       '@restatedev/restate-sdk':
-        specifier: 1.18.0
-        version: 1.18.0
+        specifier: 1.18.3
+        version: 1.18.3
       '@restatedev/restate-sdk-clients':
-        specifier: 1.18.0
-        version: 1.18.0
+        specifier: 1.18.3
+        version: 1.18.3
       argon2:
         specifier: 0.45.1
         version: 0.45.1
@@ -467,11 +467,11 @@ importers:
   infra/tests:
     devDependencies:
       '@restatedev/restate-sdk':
-        specifier: 1.18.0
-        version: 1.18.0
+        specifier: 1.18.3
+        version: 1.18.3
       '@restatedev/restate-sdk-clients':
-        specifier: 1.18.0
-        version: 1.18.0
+        specifier: 1.18.3
+        version: 1.18.3
 
   libs/common:
     dependencies:
@@ -522,11 +522,11 @@ importers:
         specifier: 3.4.0
         version: 3.4.0
       '@restatedev/restate-sdk':
-        specifier: 1.18.0
-        version: 1.18.0
+        specifier: 1.18.3
+        version: 1.18.3
       '@restatedev/restate-sdk-clients':
-        specifier: 1.18.0
-        version: 1.18.0
+        specifier: 1.18.3
+        version: 1.18.3
       '@testcontainers/mongodb':
         specifier: 12.2.1
         version: 12.2.1(supports-color@10.2.2)
@@ -1827,14 +1827,14 @@ packages:
   '@protobufjs/utf8@1.1.2':
     resolution: {integrity: sha512-b1UQwcEZ4yCnMCD8DAL1VlbvBJE9/IX4FTIp7BG1xYpf29SLazLSrqUkj4w7Y5y7cCVP6E5tcqqcI0xemPkHug==}
 
-  '@restatedev/restate-sdk-clients@1.18.0':
-    resolution: {integrity: sha512-rgZXNS/DNdbjbmlyCj9/7ISjFw7HHQCUphdT7nxD+xv0L8mVf+wc8x5MmIuHJWFAEBP1RNQv+JO7g5CMnWbf9w==}
+  '@restatedev/restate-sdk-clients@1.18.3':
+    resolution: {integrity: sha512-MwRZocOMoQojL69WjircD9z/x4m8gRcGPRYEqg83Zk1fIqxoLuLHFbEhyspvvjAizNV5/7wZXrsj/qBTI539LA==}
 
-  '@restatedev/restate-sdk-core@1.18.0':
-    resolution: {integrity: sha512-Om/s7lJD1l1NnCmA9p4Y+FNTpPSD6zazEuxcp+fzEEfgbIoOyOLJEK/JFGVbe9DQUdCQd40d+de4RDCoUQvaLA==}
+  '@restatedev/restate-sdk-core@1.18.3':
+    resolution: {integrity: sha512-thrGdKckP+yD/oK5PHjGja0ZU87xBrKWzX+m/IL/7UFh/VCpuQ7Fx0ySa9DutWKT6CnQLtA8OybK7U53IMaHTw==}
 
-  '@restatedev/restate-sdk@1.18.0':
-    resolution: {integrity: sha512-DT4hAEtZRC2sP9COXsIZeskiDPHC9n7x4lVJ15GonUt6EtMnDJ/MaZBwMxOo/6+CMm4A2jF+PFomE1sPWUHOKQ==}
+  '@restatedev/restate-sdk@1.18.3':
+    resolution: {integrity: sha512-1N3bt19vGSUknYFaxKDFaBNlQAG6RNSJRm7Q7toNpMpmlkLG4Di/qzXNos8FA+k+ap/etZv9beaExK1Npx1ylQ==}
 
   '@rolldown/binding-android-arm-eabi@1.2.6':
     resolution: {integrity: sha512-b+jTcARdTiFLI6jB4a5XjTm0RWd6KcRfQj/I2356fxUZemiho9zQLxo0RtCuMDAyKcLo6cEltkgbQp6d1+sjjQ==}
@@ -6456,15 +6456,15 @@ snapshots:
 
   '@protobufjs/utf8@1.1.2': {}
 
-  '@restatedev/restate-sdk-clients@1.18.0':
+  '@restatedev/restate-sdk-clients@1.18.3':
     dependencies:
-      '@restatedev/restate-sdk-core': 1.18.0
+      '@restatedev/restate-sdk-core': 1.18.3
 
-  '@restatedev/restate-sdk-core@1.18.0': {}
+  '@restatedev/restate-sdk-core@1.18.3': {}
 
-  '@restatedev/restate-sdk@1.18.0':
+  '@restatedev/restate-sdk@1.18.3':
     dependencies:
-      '@restatedev/restate-sdk-core': 1.18.0
+      '@restatedev/restate-sdk-core': 1.18.3
 
   '@rolldown/binding-android-arm-eabi@1.2.6':
     optional: true
