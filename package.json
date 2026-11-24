@@ -50,7 +50,7 @@
         "@nestjs/platform-express": "12.5.0",
         "@nestjs/testing": "12.5.0",
         "@testcontainers/mongodb": "12.2.1",
-        "@testcontainers/nats": "12.2.0",
+        "@testcontainers/nats": "12.2.2",
         "@types/express": "5.0.6",
         "@types/node": "26.6.6",
         "@vitest/coverage-v8": "5.0.1",
